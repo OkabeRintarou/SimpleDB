@@ -1,6 +1,8 @@
 package simpledb;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -20,6 +22,9 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
+    private Page[] pages;
+    private Map<PageId,Page> map;
+    private int numPages;
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -27,6 +32,9 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
+        pages = new Page[numPages];
+        map = new HashMap<PageId, Page>();
+        this.numPages = numPages;
     }
 
     /**
@@ -47,7 +55,18 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if(map.containsKey(pid)){
+            return map.get(pid);
+        }
+        if(map.size() < numPages){
+            Catalog catalog = Database.getCatalog();
+            DbFile dbfile = catalog.getDbFile(pid.getTableId());
+            Page page = dbfile.readPage(pid);
+            map.put(pid,page);
+            return page;
+        }else{
+            throw new DbException("space is insufficient");
+        }
     }
 
     /**
